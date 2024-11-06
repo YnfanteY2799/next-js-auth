@@ -1,0 +1,63 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              Int            @id @default(autoincrement()) @db.Integer
+  username        String         @unique @db.VarChar(100)
+  email           String         @unique @db.VarChar(255)
+  passwordHash    String         @db.Text
+  isEmailVerified Int            @default(0) @db.SmallInt
+  StatusId        Int            @db.SmallInt
+  recoveryCode    Bytes
+  createTime      DateTime?      @default(now()) @db.Date
+  updateTime      DateTime?      @db.Date
+  Status          Account_Status @relation(fields: [StatusId], references: [id])
+  ActiveSessions  Sessions[]
+  ActiveTokens    Tokens[]
+}
+
+model Passkeys {
+  id Int @id @default(autoincrement()) @db.Integer
+}
+
+model Sessions {
+  id                Int   @id @default(autoincrement()) @db.Integer
+  expiresAt         Int   @db.Integer
+  twoFactorVerified Int   @db.SmallInt
+  userId            Int?  @db.Integer
+  User              User? @relation(fields: [userId], references: [id])
+}
+
+model Tokens {
+  id         Int         @id @default(autoincrement()) @db.Integer
+  userId     Int?        @db.Integer
+  typeId     Int?        @db.Integer
+  code       String      @db.VarChar(50)
+  createTime DateTime?   @default(now()) @db.Date
+  updateTime DateTime?   @db.Date
+  User       User?       @relation(fields: [userId], references: [id])
+  Token_Type Token_Type? @relation(fields: [typeId], references: [id])
+}
+
+// Type models -> Regulatory models
+model Account_Status {
+  id         Int       @id @default(autoincrement()) @db.SmallInt
+  name       String    @db.VarChar(30)
+  createTime DateTime? @default(now()) @db.Date
+  updateTime DateTime? @db.Date
+  User       User[]
+}
+
+model Token_Type {
+  id         Int       @id @default(autoincrement()) @db.Integer
+  name       String    @db.VarChar(255)
+  createTime DateTime? @default(now()) @db.Date
+  updateTime DateTime? @db.Date
+  Tokens     Tokens[]
+}
